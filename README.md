@@ -4,7 +4,7 @@
 
 ### 1. Clone the Repository
 ```
-git clone https://github.com/abhi3315/vocab-mern-stack
+git clone https://github.com/abhi3315/yt-playlist-app.git
 ```
 
 ### 2. Setting up server
