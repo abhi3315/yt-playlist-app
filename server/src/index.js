@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const axios = require("axios");
+const cors = require("cors");
 const Playlist = require("./modal/Playlist");
 require("dotenv").config();
 
@@ -24,6 +25,7 @@ mongoose.connect(
   }
 );
 
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => res.send("<h1>Server is running</h1>"));
@@ -40,36 +42,47 @@ app.get("/getData", async (req, res) => {
 app.post("/postData", async (req, res) => {
   try {
     if (!ytApiKey) throw Error();
-    const playlistData = req.body.map(async (playlist) => {
-      const { data: playlistRes } = await axios.get(
-        `${ytApiUrl}/playlists?key=${ytApiKey}&part=contentDetails,cid,snippet&id=${playlist.playlistId}`
-      );
-      playlist.playlistDesc = playlistRes.items[0].snippet.description;
-      playlist.playlistThumbnail =
-        playlistRes.items[0].snippet.thumbnails.default.url;
-      playlist.totalVideos = playlistRes.items[0].contentDetails.itemCount;
-      const { data: playlistVideoRes } = await axios.get(
-        `${ytApiUrl}/playlistItems?key=${ytApiKey}&part=contentDetailst&playlistId=${playlist.playlistId}&maxResults=50`
-      );
-      playlist.videos = playlistVideoRes.items.map(async (video) => {
-        const videoRes = await axios.get(
-          `${ytApiUrl}/videos?key=${ytApiKey}&part=contentDetailst,snippet&id=${video.contentDetails.videoId}`
+    const playlists = await Promise.all(
+      req.body.map(async (playlist) => {
+        const { data: playlistRes } = await axios.get(
+          `${ytApiUrl}/playlists?key=${ytApiKey}&part=contentDetails,id,snippet&id=${playlist.playlistId}`
         );
-        return {
-          title: video.snippet.title,
-          url: `https://www.youtube.com/watch?v=${video.id}`,
-          id: video.id,
-          length: video.contentDetails.duration,
-          desc: video.snippet.localized.description,
-          thumbnail: video.snippet.thumbnails.default.url,
-        };
-      });
-      return { ...playlist };
-    });
+        playlist.playlistDesc = playlistRes.items[0].snippet.description;
+        playlist.playlistThumbnail =
+          playlistRes.items[0].snippet.thumbnails.default.url;
+        playlist.totalVideos = playlistRes.items[0].contentDetails.itemCount;
+        // playlist.videos = [];
+        const { data } = await axios.get(
+          `${ytApiUrl}/playlistItems?key=${ytApiKey}&part=contentDetails&playlistId=${playlist.playlistId}&maxResults=50`
+        );
+        playlist.videos = await Promise.all(
+          data.items.map(async (video) => {
+            const { data: videoRes } = await axios.get(
+              `${ytApiUrl}/videos?key=${ytApiKey}&part=contentDetails,snippet&id=${video.contentDetails.videoId}`
+            );
+            return {
+              title: videoRes.items[0].snippet.title,
+              url: `https://www.youtube.com/watch?v=${videoRes.items[0].id}`,
+              id: videoRes.items[0].id,
+              length: videoRes.items[0].contentDetails.duration,
+              desc: videoRes.items[0].snippet.localized.description,
+              thumbnail: videoRes.items[0].snippet.thumbnails.default.url,
+            };
+          })
+        );
+        return playlist;
+      })
+    );
+    await Playlist.insertMany([...playlists]);
     res
-      .status(500)
-      .json({ success: true, message: "Data added successfully!" });
+      .status(201)
+      .json({ success: true, message: "Playlists data successfully added!" });
   } catch (e) {
+    if (e.code === 11000)
+      return res.status(500).json({
+        error: true,
+        message: "Some playlists from CSV file, already exists!",
+      });
     res.status(500).json({ error: true, message: "Something went wrong!" });
   }
 });

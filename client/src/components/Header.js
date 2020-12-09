@@ -4,6 +4,7 @@ import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
+import PublishIcon from "@material-ui/icons/Publish";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -29,6 +30,7 @@ export default function ButtonAppBar(props) {
             YouTube Playlists
           </Typography>
           <Button color="inherit" onClick={toggleDrawer}>
+            <PublishIcon />
             Bulk Upload
           </Button>
         </Toolbar>
