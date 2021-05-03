@@ -1,5 +1,11 @@
 ## YT Playlist App
 
+![image](https://user-images.githubusercontent.com/43412958/116909137-6585ba00-ac61-11eb-8384-cb3ad14f3a29.png)
+
+![image](https://user-images.githubusercontent.com/43412958/116909171-733b3f80-ac61-11eb-9e7f-da2d935e39eb.png)
+
+![image](https://user-images.githubusercontent.com/43412958/116909215-85b57900-ac61-11eb-9f7a-8178237bee22.png)
+
 ## Setup
 
 ### 1. Clone the Repository
